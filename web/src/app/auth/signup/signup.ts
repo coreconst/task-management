@@ -1,0 +1,9 @@
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-signup',
+  standalone: true,
+  templateUrl: './signup.html',
+  styleUrl: './signup.css'
+})
+export class SignupComponent {}
