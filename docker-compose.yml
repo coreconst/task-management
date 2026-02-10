@@ -8,7 +8,6 @@ services:
       - "3000:3000"
     volumes:
       - ./api:/app
-      - /app/node_modules
     environment:
       - NODE_ENV=development
     depends_on:
@@ -39,3 +38,4 @@ services:
 
 volumes:
   mongo_data:
+  api_node_modules:
