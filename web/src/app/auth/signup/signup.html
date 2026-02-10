@@ -12,12 +12,14 @@
       <p class="mt-1 text-sm text-slate-500">Set up your workspace profile.</p>
     </div>
 
-    <form class="space-y-4">
+    <form class="space-y-4" (ngSubmit)="submit()">
       <label class="block text-sm text-slate-600">
         <span class="mb-1 block">Full name</span>
         <input
           type="text"
           placeholder="Alex Rivera"
+          name="name"
+          [(ngModel)]="form.name"
           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
         />
       </label>
@@ -27,6 +29,8 @@
         <input
           type="email"
           placeholder="alex@studio.com"
+          name="email"
+          [(ngModel)]="form.email"
           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
         />
       </label>
@@ -36,6 +40,8 @@
         <input
           type="password"
           placeholder="Create a password"
+          name="password"
+          [(ngModel)]="form.password"
           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
         />
       </label>
@@ -47,5 +53,7 @@
         Sign up
       </button>
     </form>
+
+    <p class="mt-4 text-center text-sm text-slate-500">{{ statusMessage }}</p>
   </div>
 </div>
