@@ -9,7 +9,7 @@ services:
     volumes:
       - ./api:/app
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=dev
     depends_on:
       - mongo
 
@@ -22,9 +22,8 @@ services:
       - "4200:4200"
     volumes:
       - ./web:/app
-      - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=dev
     depends_on:
       - api
 
