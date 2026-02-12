@@ -8,8 +8,15 @@ services:
       - "3000:3000"
     volumes:
       - ./api:/app
+      - api_node_modules:/app/node_modules
     environment:
       - NODE_ENV=dev
+    command:
+      [
+        "sh",
+        "-c",
+        "if [ ! -f node_modules/.package-lock.json ] || ! cmp -s package-lock.json node_modules/.package-lock.json; then npm install --no-audit --no-fund && cp package-lock.json node_modules/.package-lock.json; fi; npm run start:dev"
+      ]
     depends_on:
       - mongo
 
@@ -22,8 +29,15 @@ services:
       - "4200:4200"
     volumes:
       - ./web:/app
+      - web_node_modules:/app/node_modules
     environment:
       - NODE_ENV=dev
+    command:
+      [
+        "sh",
+        "-c",
+        "if [ ! -f node_modules/.package-lock.json ] || ! cmp -s package-lock.json node_modules/.package-lock.json; then npm install --no-audit --no-fund && cp package-lock.json node_modules/.package-lock.json; fi; npm start"
+      ]
     depends_on:
       - api
 
@@ -38,3 +52,4 @@ services:
 volumes:
   mongo_data:
   api_node_modules:
+  web_node_modules:
