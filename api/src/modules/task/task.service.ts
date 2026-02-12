@@ -1,7 +1,8 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { FilterTasksDto } from './dto/filter-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task, TaskDocument } from './schemas/task.schema';
 import { ProjectService } from "../project/project.service";
@@ -25,8 +26,43 @@ export class TaskService {
     return this.taskModel.findById(id).exec();
   }
 
-  async findAll(): Promise<TaskDocument[]> {
-    return this.taskModel.find().exec();
+  async findAll(query: FilterTasksDto = {}): Promise<TaskDocument[]> {
+    const filter: Record<string, any> = {};
+
+    if (query.status) {
+      filter.status = query.status;
+    }
+
+    if (query.projectId) {
+      if (!Types.ObjectId.isValid(query.projectId)) {
+        throw new NotFoundException('Project not found');
+      }
+      filter.projectId = new Types.ObjectId(query.projectId);
+    }
+
+    if (query.createdFrom || query.createdTo) {
+      const createdAt: Record<string, Date> = {};
+      if (query.createdFrom) {
+        const date = new Date(query.createdFrom);
+        if (Number.isNaN(date.getTime())) {
+          throw new BadRequestException('Invalid createdFrom date');
+        }
+        createdAt.$gte = date;
+      }
+      if (query.createdTo) {
+        const date = new Date(query.createdTo);
+        if (Number.isNaN(date.getTime())) {
+          throw new BadRequestException('Invalid createdTo date');
+        }
+        createdAt.$lte = date;
+      }
+      filter.createdAt = createdAt;
+    }
+
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+
+    return this.taskModel.find(filter).sort({ [sortBy]: sortOrder }).exec();
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<TaskDocument | null> {

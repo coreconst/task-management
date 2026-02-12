@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { FilterTasksDto } from './dto/filter-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
@@ -22,10 +23,10 @@ export class TaskController {
     return this.taskService.findById(id);
   }
 
-  @ApiOperation({ summary: 'Get task by id' })
+  @ApiOperation({ summary: 'List tasks (filter & sort)' })
   @Get()
-  findAll() {
-    return this.taskService.findAll();
+  findAll(@Query() query: FilterTasksDto) {
+    return this.taskService.findAll(query);
   }
 
   @ApiOperation({ summary: 'Update task' })
