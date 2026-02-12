@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { TaskService } from './task.service';
 import { Task } from './schemas/task.schema';
@@ -98,5 +98,44 @@ describe('TaskService', () => {
 
     expect(taskModelMock.findByIdAndDelete).toHaveBeenCalledWith(taskId);
     expect(result?._id).toBe(taskId);
+  });
+
+  it('findAll applies filters and sorting', async () => {
+    const projectId = new Types.ObjectId().toHexString();
+    const exec = jest.fn().mockResolvedValue([{ _id: 'task-id' }]);
+    const sort = jest.fn().mockReturnValue({ exec });
+    taskModelMock.find.mockReturnValue({ sort, exec });
+
+    const result = await taskService.findAll({
+      status: 'todo' as any,
+      projectId,
+      createdFrom: '2026-02-01',
+      createdTo: '2026-02-12',
+      sortBy: 'createdAt',
+      sortOrder: 'asc',
+    });
+
+    expect(taskModelMock.find).toHaveBeenCalledWith({
+      status: 'todo',
+      projectId: expect.any(Types.ObjectId),
+      createdAt: {
+        $gte: expect.any(Date),
+        $lte: expect.any(Date),
+      },
+    });
+    expect(sort).toHaveBeenCalledWith({ createdAt: 1 });
+    expect(result).toEqual([{ _id: 'task-id' }]);
+  });
+
+  it('findAll throws NotFoundException for invalid projectId', async () => {
+    await expect(
+      taskService.findAll({ projectId: 'bad-id' })
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('findAll throws BadRequestException for invalid dates', async () => {
+    await expect(
+      taskService.findAll({ createdFrom: 'invalid-date' })
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

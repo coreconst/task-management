@@ -7,6 +7,7 @@ import * as request from 'supertest';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UserModule } from '../src/modules/user/user.module';
 import { ProjectModule } from '../src/modules/project/project.module';
+import {TaskModule} from "../src/modules/task/task.module";
 
 export class TestApp {
   app: INestApplication;
@@ -35,6 +36,7 @@ export class TestApp {
         UserModule,
         AuthModule,
         ProjectModule,
+        TaskModule,
       ],
     }).compile();
 
