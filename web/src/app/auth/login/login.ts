@@ -1,7 +1,8 @@
-import {CommonModule} from '@angular/common';
-import {Component} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {FormsModule} from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { authStorage } from '../auth-storage';
 
 @Component({
   selector: 'app-login',
@@ -27,11 +28,15 @@ export class LoginComponent {
     this.statusMessage = '';
     this.statusTone = '';
 
-    this.http.post(this.apiUrl, this.form).subscribe({
-      next: () => {
+    this.http.post<{ accessToken?: string }>(this.apiUrl, this.form).subscribe({
+      next: (response) => {
         this.statusMessage = 'Logged in successfully.';
         this.statusTone = 'success';
         this.form = { email: '', password: '' };
+        if (response?.accessToken) {
+          authStorage.setToken(response.accessToken);
+          window.location.assign('/tasks');
+        }
       },
       error: (err) => {
         this.statusMessage = typeof err?.error?.message === 'string'
