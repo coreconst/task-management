@@ -23,7 +23,13 @@ export class TaskService {
   }
 
   async findById(id: string): Promise<TaskDocument | null> {
-    return this.taskModel.findById(id).exec();
+    const task = await this.taskModel.findById(id).exec();
+    if (!task) {
+      return null;
+    }
+
+    const withProjectName = await this.attachProjectName([task]);
+    return withProjectName[0] ?? task;
   }
 
   async findAll(query: FilterTasksDto = {}): Promise<TaskDocument[]> {
@@ -33,11 +39,12 @@ export class TaskService {
       filter.status = query.status;
     }
 
-    if (query.projectId) {
-      if (!Types.ObjectId.isValid(query.projectId)) {
+    const projectId = query.projectId?.trim();
+    if (projectId) {
+      if (!Types.ObjectId.isValid(projectId)) {
         throw new NotFoundException('Project not found');
       }
-      filter.projectId = new Types.ObjectId(query.projectId);
+      filter.projectId = new Types.ObjectId(projectId);
     }
 
     if (query.createdFrom || query.createdTo) {
@@ -62,7 +69,12 @@ export class TaskService {
     const sortBy = query.sortBy ?? 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
 
-    return this.taskModel.find(filter).sort({ [sortBy]: sortOrder }).exec();
+    const tasks = await this.taskModel
+      .find(filter)
+      .sort({ [sortBy]: sortOrder })
+      .exec();
+
+    return this.attachProjectName(tasks);
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<TaskDocument | null> {
@@ -78,7 +90,7 @@ export class TaskService {
 
   private async checkIsValidProjectId(projectId?: string): Promise<void>
   {
-    if (!projectId) {
+    if (!projectId || projectId.trim() === '') {
       return;
     }
 
@@ -97,10 +109,34 @@ export class TaskService {
   {
     const payload = { ...payloadDto } as Record<string, any>;
 
-    if (payloadDto.projectId) {
+    if (payloadDto.projectId && payloadDto.projectId.trim() !== '') {
       payload.projectId = new Types.ObjectId(payloadDto.projectId);
+    } else {
+      delete payload.projectId;
     }
 
     return payload;
+  }
+
+  private async attachProjectName(tasks: TaskDocument[]) {
+    const projectIds = tasks
+      .map((task) => task.projectId)
+      .filter((id): id is Types.ObjectId => id instanceof Types.ObjectId);
+
+    if (projectIds.length === 0) {
+      return tasks;
+    }
+
+    const projects = await this.projectService.findManyByIds(projectIds);
+    const projectMap = new Map(projects.map((project) => [project._id.toString(), project]));
+
+    return tasks.map((task) => {
+      const taskId = task.projectId?.toString();
+      const project = taskId ? projectMap.get(taskId) : undefined;
+      return {
+        ...task.toObject(),
+        project: project ? { _id: project._id, name: project.name } : null,
+      } as any;
+    });
   }
 }

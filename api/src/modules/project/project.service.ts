@@ -20,4 +20,8 @@ export class ProjectService {
   async findAll(): Promise<ProjectDocument[]> {
     return this.projectModel.find().exec();
   }
+
+  async findManyByIds(ids: Array<ProjectDocument['_id']>): Promise<ProjectDocument[]> {
+    return this.projectModel.find({ _id: { $in: ids } }).exec();
+  }
 }
