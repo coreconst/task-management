@@ -11,6 +11,10 @@ services:
       - api_node_modules:/app/node_modules
     environment:
       - NODE_ENV=dev
+      - MONGO_URI=mongodb://mongo:27017/task-management
+      - MONGO_TEST_URI=mongodb://mongo-test:27017/task-management_test
+      - JWT_SECRET=hash
+      - WEB_URL=http://localhost:4200
     command:
       [
         "sh",
@@ -48,6 +52,12 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+
+  mongo-test:
+    image: mongo:8
+    container_name: mongo-db-test
+    ports:
+      - "27018:27017"
 
 volumes:
   mongo_data:
