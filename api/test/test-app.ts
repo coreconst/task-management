@@ -6,11 +6,13 @@ import { Connection } from 'mongoose';
 import * as request from 'supertest';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UserModule } from '../src/modules/user/user.module';
+import { ProjectModule } from '../src/modules/project/project.module';
 
 export class TestApp {
   app: INestApplication;
   connection: Connection;
   http: ReturnType<typeof request>;
+  private cachedUser?: AuthUser;
 
   private constructor(
     app: INestApplication,
@@ -32,6 +34,7 @@ export class TestApp {
         MongooseModule.forRoot(mongoUri),
         UserModule,
         AuthModule,
+        ProjectModule,
       ],
     }).compile();
 
@@ -50,16 +53,24 @@ export class TestApp {
   }
 
   async createUser() {
+    if (this.cachedUser) {
+      return this.cachedUser;
+    }
+
     const email = 'user@example.com';
     const password = 'password';
     const name = 'Test User';
 
-    await this.http
+    const response = await this.http
       .post('/api/auth/register')
-      .send({ email, password, name })
-      .expect(201);
+      .send({ email, password, name });
 
-    return { email, password };
+    if (![201, 409].includes(response.status)) {
+      throw new Error(`Unexpected register status: ${response.status}`);
+    }
+
+    this.cachedUser = { email, password };
+    return this.cachedUser;
   }
 
   async authHttp(): Promise<AuthHttpClient> {
@@ -86,4 +97,9 @@ type AuthHttpClient = {
   put: (url: string) => request.Test;
   patch: (url: string) => request.Test;
   delete: (url: string) => request.Test;
+};
+
+type AuthUser = {
+  email: string;
+  password: string;
 };
